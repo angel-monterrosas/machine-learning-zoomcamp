@@ -1,5 +1,0 @@
-El dataset que pretendo utilizar para esta actividad sera:
-https://raw.githubusercontent.com/alexeygrigorev/datasets/master/
-
-las preguntas que trataremos de responder en el siguiente Nootebook ipyn seran:
-
