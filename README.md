@@ -34,18 +34,18 @@ machine-learning-zoomcamp/
 
 ## 📊 Progress / Progreso
 
-| Module | Topic | Homework | Status |
-|---|---|---|---|
-| **01** | Introduction to ML | [HW 01](./homework/hw1/) | ✅ Completed |
-| **02** | Machine Learning for Regression | [HW 02](./homework/hw2/) | ⏳ In Progress |
-| **03** | Machine Learning for Classification | HW 03 | ⏳ Pending |
-| **04** | Evaluation Metrics for Classification | HW 04 | ⏳ Pending |
-| **05** | Deploying Machine Learning Models | HW 05 | ⏳ Pending |
-| **06** | Decision Trees & Ensemble Learning | HW 06 | ⏳ Pending |
-| **07** | Neural Networks & Deep Learning | HW 07 | ⏳ Pending |
-| **08** | Serverless Deep Learning | HW 08 | ⏳ Pending |
-| **09** | Kubernetes & TensorFlow Serving | HW 09 | ⏳ Pending |
-| **10** | Capstone Projects | Midterm / Capstone | ⏳ Pending |
+| Module | Topic | Homework | Status       |
+|---|---|---|--------------|
+| **01** | Introduction to ML | [HW 01](./homework/hw1/) | ✅ Completed  |
+| **02** | Machine Learning for Regression | [HW 02](./homework/hw2/) | ✅  Completed |
+| **03** | Machine Learning for Classification | HW 03 | ⏳ Pending    |
+| **04** | Evaluation Metrics for Classification | HW 04 | ⏳ Pending    |
+| **05** | Deploying Machine Learning Models | HW 05 | ⏳ Pending    |
+| **06** | Decision Trees & Ensemble Learning | HW 06 | ⏳ Pending    |
+| **07** | Neural Networks & Deep Learning | HW 07 | ⏳ Pending    |
+| **08** | Serverless Deep Learning | HW 08 | ⏳ Pending    |
+| **09** | Kubernetes & TensorFlow Serving | HW 09 | ⏳ Pending    |
+| **10** | Capstone Projects | Midterm / Capstone | ⏳ Pending    |
 
 ---
 
