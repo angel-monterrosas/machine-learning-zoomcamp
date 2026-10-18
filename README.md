@@ -2,11 +2,12 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![Jupyter](https://img.shields.io/badge/Jupyter-Notebook-orange.svg)](https://jupyter.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) 
+[![Course Repository](https://img.shields.io/badge/GitHub-DataTalksClub-blue?logo=github)](https://github.com/DataTalksClub/machine-learning-zoomcamp)
 
-Solutions, notes, and code for the **Machine Learning Zoomcamp 2026** offered by [DataTalks.Club](https://datatalks.club/).
+Solutions, notes, and code for the [**Machine Learning Zoomcamp 2026**](https://courses.datatalks.club/ml-zoomcamp-2026/) offered by [DataTalks.Club](https://datatalks.club/).
 
-Soluciones, notas y código para el **Machine Learning Zoomcamp 2026** impartido por [DataTalks.Club](https://datatalks.club/).
+Soluciones, notas y código para el [**Machine Learning Zoomcamp 2026**](https://courses.datatalks.club/ml-zoomcamp-2026/) impartido por [DataTalks.Club](https://datatalks.club/).
 
 ---
 
