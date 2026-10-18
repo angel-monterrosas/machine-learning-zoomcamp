@@ -25,6 +25,8 @@ machine-learning-zoomcamp/
 ├── homework/                # Homework assignments by week
 │   ├── hw1/                 # Week 1: Introduction to Machine Learning
 │   └── hw2/                 # Week 2: Machine Learning for Regression
+│   ├── hw3/                 # Week 3: Machine Learning for Classification 
+│   └── hw4/                 # Week 4: Evaluation Metrics for Classification 
 ├── models/                  # Trained models (.bin, .pkl, .onnx)
 ├── notebooks/               # Experimental notebooks
 └── notes/                   # Personal study notes and summaries
