@@ -57,7 +57,6 @@ machine-learning-zoomcamp/
 * **Environments & Tools:** Conda, JupyterLab, PyCharm, Git
 
 
----t
 
 ## 🚀 How to Run / Cómo Ejecutar
 
