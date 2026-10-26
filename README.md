@@ -43,7 +43,7 @@ machine-learning-zoomcamp/
 | **02** | Machine Learning for Regression | [HW 02](./homework/hw2/) | ✅  Completed |
 | **03** | Machine Learning for Classification | [HW 03](./homework/hw3/) | ✅  Completed    |
 | **04** | Evaluation Metrics for Classification | [HW 04](./homework/hw4/) | ✅  Completed    |
-| **05** | Deploying Machine Learning Models | HW 05                    | ⏳ Pending    |
+| **05** | Deploying Machine Learning Models | [HW 05](./homework/hw4/) | ✅  Completed     |
 | **06** | Decision Trees & Ensemble Learning | HW 06                    | ⏳ Pending    |
 | **07** | Neural Networks & Deep Learning | HW 07                    | ⏳ Pending    |
 | **08** | Serverless Deep Learning | HW 08                    | ⏳ Pending    |
