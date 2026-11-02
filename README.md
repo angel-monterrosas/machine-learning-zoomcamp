@@ -28,6 +28,8 @@ machine-learning-zoomcamp/
 │   └── hw2/                 # Week 2: Machine Learning for Regression
 │   ├── hw3/                 # Week 3: Machine Learning for Classification 
 │   └── hw4/                 # Week 4: Evaluation Metrics for Classification 
+│   └── hw5/                 # Week 5: Deploying Machine Learning Models  
+│   └── hw6/                 # Week 6: Decision Trees and Ensemble Learning
 ├── models/                  # Trained models (.bin, .pkl, .onnx)
 ├── notebooks/               # Experimental notebooks
 └── notes/                   # Personal study notes and summaries
@@ -44,7 +46,7 @@ machine-learning-zoomcamp/
 | **03** | Machine Learning for Classification | [HW 03](./homework/hw3/) | ✅  Completed    |
 | **04** | Evaluation Metrics for Classification | [HW 04](./homework/hw4/) | ✅  Completed    |
 | **05** | Deploying Machine Learning Models | [HW 05](./homework/hw5/) | ✅  Completed     |
-| **06** | Decision Trees & Ensemble Learning | HW 06                    | ⏳ Pending    |
+| **06** | Decision Trees & Ensemble Learning | [HW 06](./homework/hw6/) | ✅  Completed     |
 | **07** | Neural Networks & Deep Learning | HW 07                    | ⏳ Pending    |
 | **08** | Serverless Deep Learning | HW 08                    | ⏳ Pending    |
 | **09** | Kubernetes & TensorFlow Serving | HW 09                    | ⏳ Pending    |

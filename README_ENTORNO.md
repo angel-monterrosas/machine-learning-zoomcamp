@@ -57,7 +57,7 @@ python --version
 Instala los paquetes fundamentales para Data Science y Machine Learning:
 
 ```bash
-pip install pandas numpy matplotlib seaborn scikit-learn
+pip install "numpy~=2.5.3" "pandas~=3.0.6" "matplotlib~=3.11.2" "seaborn~=0.13.2" "scikit-learn~=1.9.1" "xgboost~=3.4.1"
 ```
 
 ---
