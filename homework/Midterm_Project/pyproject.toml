@@ -1,0 +1,32 @@
+[project]
+name = "midterm-project"
+version = "0.1.0"
+description = "Midterm project for Machine Learning Zoomcamp"
+readme = "README.md"
+authors = [
+    { name = "Angel Uriel Monterrosas Gonzalez", email = "a.monterrosas.gonzalez@outlook.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.163.0",
+    "joblib>=1.6.0",
+    "lightgbm>=4.7.0",
+    "matplotlib>=3.11.2",
+    "notebook>=7.6.5",
+    "numpy>=2.4.6",
+    "pandas>=3.1.1",
+    "pyarrow>=26.0.1",
+    "pydantic>=2.14.3",
+    "requests>=2.34.2",
+    "scikit-learn>=1.9.1",
+    "seaborn>=0.13.2",
+    "streamlit>=1.67.0",
+    "uvicorn[standard]>=0.54.0",
+    "xgboost>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]

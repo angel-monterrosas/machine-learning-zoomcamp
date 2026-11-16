@@ -1,0 +1,36 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Notebooks y datos (el bundle.pkl ya contiene lo necesario)
+notebooks/
+data/
+*.ipynb
+*.parquet
+*.csv
+
+# Tests (cubre ambas variantes por si acaso)
+tests/
+test/
+
+# Git y docs
+.git/
+.gitignore
+*.md
+!README.md
+
+# IDE
+.streamlit/
+.vscode/
+.idea/
+
+# Modelos alternativos (solo bundle.pkl va a la imagen)
+models/model.pkl
+models/*_val_tuned.pkl
+models/*.pkl
+!models/bundle.pkl

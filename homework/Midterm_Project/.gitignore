@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.streamlit
+# Datos crudos y procesados (se regeneran con los scripts)
+data/raw/
+data/processed/
+*.parquet
+
+# Modelos entrenados (se regeneran con `uv run python -m src.train`)
+models/*.pkl
+models/*.joblib
+!models/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Entorno
+.env
+.env.*
+!.env.example

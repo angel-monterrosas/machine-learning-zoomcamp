@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1.7
+FROM python:3.11-slim AS base
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1
+
+WORKDIR /app
+
+FROM base AS deps
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+FROM base AS runtime
+WORKDIR /app
+COPY --from=deps /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+# Streamlit necesita escribir config y cache
+RUN useradd -m -u 1000 appuser
+COPY --chown=appuser:appuser app/ ./app/
+USER appuser
+
+EXPOSE 8501
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request,sys; \
+  sys.exit(0) if urllib.request.urlopen('http://localhost:8501/_stcore/health', timeout=3).status == 200 else sys.exit(1)"
+
+CMD ["streamlit", "run", "app/streamlit_app.py", \
+     "--server.port=8501", \
+     "--server.address=0.0.0.0", \
+     "--server.headless=true"]

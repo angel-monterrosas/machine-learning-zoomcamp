@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1.7
+# ---------- Base ----------
+FROM python:3.11-slim AS base
+
+# Instalar uv desde imagen oficial
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Variables de entorno
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    UV_LINK_MODE=copy \
+    UV_COMPILE_BYTECODE=1
+
+WORKDIR /app
+
+# ---------- Dependencias (cacheable) ----------
+FROM base AS deps
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+# ---------- Runtime ----------
+FROM base AS runtime
+WORKDIR /app
+
+# Copiar venv y código
+COPY --from=deps /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
+
+COPY src/ ./src/
+COPY api/ ./api/
+COPY models/bundle.pkl ./models/bundle.pkl
+
+# Usuario no-root (buena práctica de seguridad)
+RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8000
+
+# Healthcheck nativo de Docker
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD python -c "import urllib.request,sys; \
+  sys.exit(0) if urllib.request.urlopen('http://localhost:8000/health', timeout=3).status == 200 else sys.exit(1)"
+
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
