@@ -7,9 +7,9 @@
 
 # BCMM Predictor — Balanza Comercial de Mercancías de México
 
-![BCMM Predictor UI](docs/screenshot.png) 
+![BCMM Predictor UI](docs/screenshot.PNG) 
 
-![BCMM Predictor API](docs/screenshot2.png) 
+![BCMM Predictor API](docs/screenshot2.PNG) 
 Sistema de predicción del valor del comercio exterior de México (exportaciones e importaciones) basado en datos de la **Balanza Comercial de Mercancías de México (BCMM)** del INEGI. El proyecto expone una **API REST** (FastAPI) y una **interfaz web** (Streamlit), ambas containerizadas con Docker.
 
 ---
@@ -338,9 +338,9 @@ docker compose down
 ### Pasos para replicar desde cero
 
 ```bash
-# 1. Clonar el repositorio
-git clone [https://github.com/TU_USUARIO/TU_REPOSITORIO.git](https://github.com/TU_USUARIO/TU_REPOSITORIO.git)
-cd TU_REPOSITORIO
+### 1. Clonar el repositorio
+git clone https://github.com/angel-monterrosas/machine-learning-zoomcamp.git
+cd machine-learning-zoomcamp/homework/Midterm_Project
 
 # 2. Instalar dependencias exactas
 uv sync --frozen
