@@ -30,6 +30,7 @@ machine-learning-zoomcamp/
 │   └── hw4/                 # Week 4: Evaluation Metrics for Classification 
 │   └── hw5/                 # Week 5: Deploying Machine Learning Models  
 │   └── hw6/                 # Week 6: Decision Trees and Ensemble Learning
+│   └── hw7/                 # Week 7: Midterm Project
 ├── models/                  # Trained models (.bin, .pkl, .onnx)
 ├── notebooks/               # Experimental notebooks
 └── notes/                   # Personal study notes and summaries
@@ -39,18 +40,18 @@ machine-learning-zoomcamp/
 
 ## 📊 Progress / Progreso
 
-| Module | Topic                                 | Homework                 | Status       |
-|---|---------------------------------------|--------------------------|--------------|
-| **01** | Introduction to ML                    | [HW 01](./homework/hw1/) | ✅ Completed  |
-| **02** | Machine Learning for Regression       | [HW 02](./homework/hw2/) | ✅  Completed |
-| **03** | Machine Learning for Classification   | [HW 03](./homework/hw3/) | ✅  Completed    |
-| **04** | Evaluation Metrics for Classification | [HW 04](./homework/hw4/) | ✅  Completed    |
-| **05** | Deploying Machine Learning Models     | [HW 05](./homework/hw5/) | ✅  Completed     |
-| **06** | Decision Trees & Ensemble Learning    | [HW 06](./homework/hw6/) | ✅  Completed     |
-| **07** | Midterm Project                       | HW 07                    | ⏳ Pending    |
-| **08** | Neural Networks & Deep Learning       | HW 08                    | ⏳ Pending    |
-| **09** | Serverless Deep Learning              | HW 09                    | ⏳ Pending    |
-| **10** | Kubernetes                            | HW 10                    | ⏳ Pending    |
+| Module | Topic                                 | Homework                             | Status       |
+|---|---------------------------------------|--------------------------------------|--------------|
+| **01** | Introduction to ML                    | [HW 01](./homework/hw1/)             | ✅ Completed  |
+| **02** | Machine Learning for Regression       | [HW 02](./homework/hw2/)             | ✅  Completed |
+| **03** | Machine Learning for Classification   | [HW 03](./homework/hw3/)             | ✅  Completed    |
+| **04** | Evaluation Metrics for Classification | [HW 04](./homework/hw4/)             | ✅  Completed    |
+| **05** | Deploying Machine Learning Models     | [HW 05](./homework/hw5/)             | ✅  Completed     |
+| **06** | Decision Trees & Ensemble Learning    | [HW 06](./homework/hw6/)             | ✅  Completed     |
+| **07** | Midterm Project                       | [HW 07](./homework/Midterm_Project/) | ✅  Completed     |
+| **08** | Neural Networks & Deep Learning       | HW 08                                | ⏳ Pending    |
+| **09** | Serverless Deep Learning              | HW 09                                | ⏳ Pending    |
+| **10** | Kubernetes                            | HW 10                                | ⏳ Pending    |
 
 ---
 
