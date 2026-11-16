@@ -1,4 +1,4 @@
-# BCMM Predictor — Predicción del Comercio Exterior de México
+# BCMM Predictor — Mexico's Foreign Trade Forecast
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
@@ -10,127 +10,129 @@
 ![BCMM Predictor API](docs/screenshot2.PNG) 
 
 ![BCMM Predictor API](docs/screenshot3.PNG) 
-Sistema de predicción del valor del comercio exterior de México (exportaciones e importaciones) basado en datos de la **Balanza Comercial de Mercancías de México (BCMM)** del INEGI. El proyecto expone una **API REST** (FastAPI) y una **interfaz web** (Streamlit), ambas containerizadas con Docker.
+
+Forecasting system for the value of Mexico's foreign trade (exports and imports) based on data from the **Mexico's Merchandise Trade Balance (BCMM)** published by INEGI. The project exposes a **REST API** (FastAPI) and a **web interface** (Streamlit), both containerized with Docker.
 
 ---
-## Análisis Exploratorio de Datos (EDA)
+## Exploratory Data Analysis (EDA)
 
-El análisis completo está documentado en [`notebooks/notebook.ipynb`](./notebooks/notebook.ipynb). A continuación se resumen los hallazgos clave que guiaron las decisiones de modelado.
+The full analysis is documented in [`notebooks/notebook.ipynb`](./notebooks/notebook.ipynb). Below is a summary of the key findings that drove the modeling decisions.
 
-### 1. Distribución del target (`VAL_USD`) y transformación logarítmica
+### 1. Target distribution (`VAL_USD`) and logarithmic transformation
 
-El valor del comercio exterior por país y mes presenta una **distribución fuertemente sesgada a la derecha**:
+The value of foreign trade per country and month has a **strongly right-skewed distribution**:
 
-| Estadístico | Valor (miles USD) |
+| Statistic | Value (thousands USD) |
 |---|---|
-| Mínimo | 0 |
+| Minimum | 0 |
 | 25 % | 0 |
-| **Mediana** | **109** |
-| Media | 72,495 |
+| **Median** | **109** |
+| Mean | 72,495 |
 | 75 % | 4,846 |
 | 99 % | 935,735 |
-| Máximo | 39,695,678 |
+| Maximum | 39,695,678 |
 
-**Hallazgos:**
-- La **mediana (109)** es ~665× menor que la **media (72,495)**, lo que confirma el sesgo extremo.
-- **~25 % de los registros son cero** (comercio real nulo o redondeo a 0), lo que hace inviable una regresión directa sobre el valor bruto.
-- La **desviación estándar (794,349)** es mayor que la media, indicando sobredispersión típica de series de comercio exterior.
+**Findings:**
+- The **median (109)** is ~665× smaller than the **mean (72,495)**, confirming the extreme skew.
+- **~25 % of the records are zero** (genuinely zero trade or rounded to 0), which makes direct regression on the raw value unfeasible.
+- The **standard deviation (794,349)** is larger than the mean, indicating the overdispersion typical of foreign trade series.
 
-**Decisión:** aplicar `log1p(VAL_USD)` como variable objetivo (`log1p(x) = log(1 + x)`), lo que:
-- Estabiliza la varianza y reduce el efecto de outliers (USA–Consumo puede representar 39 mil millones USD mientras que países como Belice están en miles).
-- Maneja el valor 0 sin errores (`log1p(0) = 0`).
-- Mejora la convergencia de los modelos lineales y de boosting.
+**Decision:** apply `log1p(VAL_USD)` as the target variable (`log1p(x) = log(1 + x)`), which:
+- Stabilizes the variance and reduces the effect of outliers (USA–Consumption can represent 39 billion USD while countries like Belize are in the thousands).
+- Handles the value 0 without errors (`log1p(0) = 0`).
+- Improves convergence of linear and boosting models.
 
-Al predecir, se aplica la transformación inversa `expm1(ŷ) - 1` para devolver el valor en miles de USD.
+At prediction time, the inverse transformation `expm1(ŷ) - 1` is applied to return the value in thousands of USD.
 
-### 2. Valores confidenciales ("C")
+### 2. Confidential values ("C")
 
-El INEGI suprime las operaciones realizadas por uno o dos informantes, marcándolas con `"C"` en `VAL_USD`. Tras cargar los CSVs, **pandas las convierte automáticamente en `NaN`**.
+INEGI suppresses operations carried out by one or two informants, flagging them as `"C"` in `VAL_USD`. After loading the CSVs, **pandas automatically converts them to `NaN`**.
 
-| Nivel | Registros | % de pérdida |
+| Level | Records | % loss |
 |---|---|---|
-| Dataset completo | 34,628 / 216,792 | **15.97 %** |
-| Nivel país (modelado) | 34,628 / 200,832 | **17.24 %** |
+| Full dataset | 34,628 / 216,792 | **15.97 %** |
+| Country level (modeling) | 34,628 / 200,832 | **17.24 %** |
 
-**Hallazgos adicionales:**
-- La proporción de confidenciales es **uniforme entre `TIPO` (export/import) y `TIPO_BIEN` (consumo/intermedio/capital)** (16.5 %–18 % en todos los cruces), lo que descarta un sesgo sistemático.
-- Los países con mayor % de confidenciales son **micro-mercados volátiles** (PNG 63 %, GIB 60 %, LBR 58 %, DJI 57 %, BEN 54 %) que representan menos del 0.1 % del comercio total.
+**Additional findings:**
+- The proportion of confidential values is **uniform across `TIPO` (export/import) and `TIPO_BIEN` (consumption/intermediate/capital)** (16.5 %–18 % in all cross-tabs), ruling out systematic bias.
+- The countries with the highest % of confidential values are **volatile micro-markets** (PNG 63 %, GIB 60 %, LBR 58 %, DJI 57 %, BEN 54 %) that account for less than 0.1 % of total trade.
 
-**Decisión:** se **eliminan las filas confidenciales del conjunto de entrenamiento** (no se imputan). Justificación:
-- Son indistinguibles del ruido y podrían sesgar el modelo hacia valores intermedios artificiales.
-- Representan una pérdida asumible (17 %) dado que el dataset conserva **166,204 filas** para modelado.
-- Se documenta como limitación: los micro-mercados con alta confidencialidad quedan subrepresentados.
+**Decision:** **confidential rows are removed from the training set** (not imputed). Rationale:
+- They are indistinguishable from noise and could bias the model toward artificial intermediate values.
+- They represent an acceptable loss (17 %) given that the dataset retains **166,204 rows** for modeling.
+- It is documented as a limitation: micro-markets with high confidentiality are underrepresented.
 
-### 3. Cardinalidad de países y estrategia de codificación
+### 3. Country cardinality and encoding strategy
 
-| Variable | Valores únicos | Estrategia |
+| Variable | Unique values | Strategy |
 |---|---|---|
-| `PAIS_O_D` | **239** | `TargetEncoder` (con smoothing) |
+| `PAIS_O_D` | **239** | `TargetEncoder` (with smoothing) |
 | `CLAVE_CONTINENTE` | 5 | OneHotEncoder |
 | `CLAVE_REGION` | 13 | OneHotEncoder |
 | `TIPO` | 2 | OneHotEncoder |
 | `TIPO_BIEN` | 3 | OneHotEncoder |
-| `ANIO` + `MES` | — | Codificación cíclica (`MES_SIN`, `MES_COS`) |
+| `ANIO` + `MES` | — | Cyclical encoding (`MES_SIN`, `MES_COS`) |
 
-**Hallazgos:**
-- **`PAIS_O_D` tiene alta cardinalidad (239)** → un one-hot explotaría a 239 columnas dispersas y diluiría la señal.
-- Se optó por **`TargetEncoder`** dentro del `Pipeline` de scikit-learn, que reemplaza cada país por una estimación regularizada de la media del target (en escala log). Esto:
-  - Evita data leakage (el encoding se ajusta solo en train dentro de cada fold).
-  - Captura la magnitud económica inherente de cada socio comercial (USA ≫ Belice).
-  - Mantiene el modelo compacto (1 columna en lugar de 239).
-- **25 países no tienen `CLAVE_CONTINENTE`/`CLAVE_REGION`** en el dataset del INEGI (incluyendo CHN, JPN, KOR, IND, AUS). La API los conserva con `null` y el modelo los predice usando el `TargetEncoder` de país.
+**Findings:**
+- **`PAIS_O_D` has high cardinality (239)** → one-hot encoding would explode into 239 sparse columns and dilute the signal.
+- **`TargetEncoder`** was chosen inside the scikit-learn `Pipeline`, which replaces each country with a regularized estimate of the target mean (on the log scale). This:
+  - Avoids data leakage (the encoding is fitted only on train within each fold).
+  - Captures the inherent economic magnitude of each trading partner (USA ≫ Belize).
+  - Keeps the model compact (1 column instead of 239).
+- **25 countries have no `CLAVE_CONTINENTE`/`CLAVE_REGION`** in the INEGI dataset (including CHN, JPN, KOR, IND, AUS). The API preserves them with `null` and the model predicts them using the country `TargetEncoder`.
 
-### 4. Estacionalidad mensual
+### 4. Monthly seasonality
 
-La serie mensual agregada (2015-01 a 2026-08) no muestra huecos: **todos los meses están presentes** con 1,548 registros (excepciones por estatus de cifra). Se observan patrones estacionales típicos del comercio mexicano:
+The aggregated monthly series (2015-01 to 2026-08) has no gaps: **every month is present** with 1,548 records (exceptions due to data status). Typical seasonal patterns of Mexican trade are observed:
 
-- **Picos en marzo y octubre** (cierre de trimestres y temporadas de exportación agropecuaria).
-- **Valles en enero** (efecto post-vacacional) y **diciembre** (paros industriales).
-- **Tendencia creciente** sostenida de 2015 a 2019, caída en 2020 (COVID-19), y recuperación acelerada 2021-2024 (nearshoring).
+- **Peaks in March and October** (quarter-end and agricultural export seasons).
+- **Troughs in January** (post-holiday effect) and **December** (industrial shutdowns).
+- **Steady upward trend** from 2015 to 2019, a drop in 2020 (COVID-19), and accelerated recovery 2021-2024 (nearshoring).
 
-**Decisión:** codificar el mes como variable **cíclica** (`MES_SIN = sin(2π·mes/12)`, `MES_COS = cos(2π·mes/12)`) para que el modelo entienda que diciembre y enero son "vecinos", evitando que un modelo lineal los trate como valores ordinales distantes.
+**Decision:** encode the month as a **cyclical** variable (`MES_SIN = sin(2π·month/12)`, `MES_COS = cos(2π·month/12)`) so the model understands that December and January are "neighbors", preventing a linear model from treating them as distant ordinal values.
 
-### 5. Visualizaciones clave
+### 5. Key visualizations
 
-Las siguientes gráficas del notebook respaldan los hallazgos anteriores:
+The following plots from the notebook support the findings above:
 
-#### Distribución del target (escala original vs. logarítmica)
+#### Target distribution (original vs. logarithmic scale)
 
-![Distribución de VAL_USD](./docs/img/distribucion_val_usd.png)
+![VAL_USD distribution](./docs/img/distribucion_val_usd.png)
 
-*Histograma de `VAL_USD` (izq.) y de `log1p(VAL_USD)` (der.). La transformación logarítmica convierte una distribución con cola larguísima en una aproximadamente normal, adecuada para regresión.*
+*Histogram of `VAL_USD` (left) and `log1p(VAL_USD)` (right). The logarithmic transformation turns a distribution with a very long tail into an approximately normal one, suitable for regression.*
 
-#### Evolución mensual del comercio (exportaciones vs. importaciones)
+#### Monthly evolution of trade (exports vs. imports)
 
-![Serie temporal](./docs/img/serie_temporal.png)
+![Time series](./docs/img/serie_temporal.png)
 
-*Serie agregada 2015-2026 por tipo de flujo. Se observan los picos estacionales y la caída de 2020.*
+*Aggregated series 2015-2026 by flow type. Seasonal peaks and the 2020 drop are visible.*
 
-#### Top 15 socios comerciales de México
+#### Top 15 trading partners of Mexico
 
-![Top países](./docs/img/top_paises.png)
+![Top countries](./docs/img/top_paises.png)
 
-*Los 15 países con mayor valor acumulado de comercio. USA concentra ~60 % del total, seguido de CAN y CHN. La distribución "long-tail" justifica el uso de `TargetEncoder` para la variable de país.*
+*The 15 countries with the highest accumulated trade value. USA accounts for ~60 % of the total, followed by CAN and CHN. The "long-tail" distribution justifies using `TargetEncoder` for the country variable.*
 
-#### Mapa de calor `TIPO_BIEN` × `CLAVE_CONTINENTE`
+#### `TIPO_BIEN` × `CLAVE_CONTINENTE` heatmap
 
-![Heatmap tipo bien por continente](./docs/img/heatmap_bien_continente.png)
+![Heatmap good type by continent](./docs/img/heatmap_bien_continente.png)
 
-*Distribución del valor por tipo de bien y continente. América concentra el mayor volumen en todas las categorías; Asia muestra mayor peso relativo en bienes intermedios.*
+*Value distribution by good type and continent. America concentrates the largest volume in all categories; Asia shows a higher relative weight in intermediate goods.*
 
 
 
-### 6. Decisiones de modelado derivadas del EDA
+### 6. Modeling decisions derived from the EDA
 
-| Hallazgo | Decisión |
+| Finding | Decision |
 |---|---|
-| Target sesgado + 25 % ceros | `log1p` + `expm1` inverso |
-| 239 países (alta cardinalidad) | `TargetEncoder` (dentro del Pipeline) |
-| 17 % confidenciales uniformes | Eliminar del train (no imputar) |
-| Estacionalidad marcada | Codificación cíclica del mes |
-| 25 países sin geografía | API devuelve `null` en esos campos |
-| 2015-2022 definitivas, 2023-2025 ajustadas, 2026 revisadas | Split temporal (train ≤2023, val 2024, test ≥2025) + warning en API para 2026 |
-## Arquitectura
+| Skewed target + 25 % zeros | `log1p` + inverse `expm1` |
+| 239 countries (high cardinality) | `TargetEncoder` (inside the Pipeline) |
+| 17 % uniform confidential values | Remove from train (do not impute) |
+| Marked seasonality | Cyclical month encoding |
+| 25 countries with no geography | API returns `null` in those fields |
+| 2015-2022 definitive, 2023-2025 adjusted, 2026 revised | Temporal split (train ≤2023, val 2024, test ≥2025) + API warning for 2026 |
+
+## Architecture
 
 ```mermaid
 flowchart LR
@@ -138,62 +140,62 @@ flowchart LR
     classDef api fill:#009688,stroke:#00695c,stroke-width:2px,color:#ffffff,font-weight:bold;
     classDef artifact fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#ffffff,font-weight:bold;
 
-    subgraph Frontend ["Interfaz de Usuario"]
-        UI["<b>Streamlit (UI)</b><br/>Puerto: 8501"]:::ui
+    subgraph Frontend ["User Interface"]
+        UI["<b>Streamlit (UI)</b><br/>Port: 8501"]:::ui
     end
 
-    subgraph Backend ["Servidor / Inferencia"]
-        API["<b>FastAPI (API)</b><br/>Puerto: 8000"]:::api
-        PKL[("<b>bundle.pkl</b><br/>Modelo XGBoost + Catálogos")]:::artifact
+    subgraph Backend ["Server / Inference"]
+        API["<b>FastAPI (API)</b><br/>Port: 8000"]:::api
+        PKL[("<b>bundle.pkl</b><br/>XGBoost model + Catalogs")]:::artifact
     end
 
     UI -->|"<b>HTTP</b><br/>GET /paises<br/>POST /predict"| API
-    API <-->|"Carga / Predicción"| PKL
+    API <-->|"Load / Predict"| PKL
 ```
 
-| Componente | Tecnología | Propósito |
+| Component | Technology | Purpose |
 |---|---|---|
-| `src/data.py` | pandas | Carga, limpieza y enriquecimiento de CSVs del INEGI |
-| `src/features.py` | pandas, numpy | Ingeniería de features (target encoding, lags, estacionalidad) |
-| `src/train.py` | scikit-learn, XGBoost | Entrenamiento y tuning con validación temporal |
-| `src/predict.py` | joblib | Carga del bundle y predicción individual |
-| `api/main.py` | FastAPI | Endpoints REST con logs y manejo de errores |
-| `api/schemas.py` | Pydantic | Contratos de request/response |
-| `app/streamlit_app.py` | Streamlit | UI corporativa con métricas y formulario |
-| `test/test_api.py` | pytest | 15 tests de integración |
+| `src/data.py` | pandas | Loading, cleaning and enrichment of INEGI CSVs |
+| `src/features.py` | pandas, numpy | Feature engineering (target encoding, lags, seasonality) |
+| `src/train.py` | scikit-learn, XGBoost | Training and tuning with temporal validation |
+| `src/predict.py` | joblib | Bundle loading and single prediction |
+| `api/main.py` | FastAPI | REST endpoints with logging and error handling |
+| `api/schemas.py` | Pydantic | Request/response contracts |
+| `app/streamlit_app.py` | Streamlit | Corporate UI with metrics and form |
+| `test/test_api.py` | pytest | 15 integration tests |
 
 ---
 
-## Inicio rápido
+## Quick start
 
-### Pre-requisitos
+### Prerequisites
 
-- [uv](https://github.com/astral-sh/uv) (gestor de dependencias)
+- [uv](https://github.com/astral-sh/uv) (dependency manager)
 - Docker + Docker Compose
-- Los CSVs del INEGI en `data/raw/` (ver [Descarga de datos](https://inegi.org.mx/contenidos/programas/comext/datosabiertos/conjunto_de_datos_bcmm_mensual_paises_bien_csv.zip))
+- The INEGI CSVs in `data/raw/` (see [Data download](https://inegi.org.mx/contenidos/programas/comext/datosabiertos/conjunto_de_datos_bcmm_mensual_paises_bien_csv.zip))
 
-### 1. Instalar dependencias
+### 1. Install dependencies
 
 ```bash
 uv sync
 ```
 
-### 2. Descargar los datos del INEGI
+### 2. Download the INEGI data
 
-Descarga el paquete de datos abiertos de la Balanza Comercial de Mercancías de México desde el portal oficial del [INEGI (Datos Abiertos - Comercio Exterior)](https://inegi.org.mx/contenidos/programas/comext/datosabiertos/conjunto_de_datos_bcmm_mensual_paises_bien_csv.zip).
+Download the open data package for Mexico's Merchandise Trade Balance from the official [INEGI portal (Open Data - Foreign Trade)](https://inegi.org.mx/contenidos/programas/comext/datosabiertos/conjunto_de_datos_bcmm_mensual_paises_bien_csv.zip).
 
-Descomprime el archivo y coloca los siguientes CSV dentro del directorio `data/raw/`:
+Unzip the file and place the following CSVs inside the `data/raw/` directory:
 
-* **Tablas de cifras mensuales:**
+* **Monthly figure tables:**
   * `bcmm_paises_bien_mensual_tr_cifra_2015_2022.csv`
   * `bcmm_paises_bien_mensual_tr_cifra_2023_2025.csv`
   * `bcmm_paises_bien_mensual_tr_cifra_2026.csv`
-* **Catálogos:**
+* **Catalogs:**
   * `tc_pais.csv`
   * `tc_region.csv`
   * `tc_continente.csv`
 
-La estructura resultante debe verse así:
+The resulting structure should look like this:
 
 ```text
 data/
@@ -205,17 +207,18 @@ data/
     ├── tc_pais.csv
     └── tc_region.csv
 ```
-### 3. Entrenar el modelo
+
+### 3. Train the model
 
 ```bash
 uv run python -m src.train
 ```
 
-Esto genera `models/bundle.pkl` (~25 MB) con el pipeline de XGBoost y el *lookup* de países enriquecido.
+This generates `models/bundle.pkl` (~25 MB) with the XGBoost pipeline and the enriched country *lookup*.
 
 ---
 
-### 4. Levantar API + UI con Docker
+### 4. Launch API + UI with Docker
 
 ```bash
 docker compose up --build
@@ -226,9 +229,9 @@ docker compose up --build
 
 ---
 
-### 5. (Alternativa) Levantar sin Docker
+### 5. (Alternative) Run without Docker
 
-Ejecuta cada servicio en una terminal distinta:
+Run each service in a separate terminal:
 
 ```bash
 # Terminal 1 — API
@@ -242,19 +245,19 @@ uv run streamlit run app/streamlit_app.py
 
 ---
 
-## API REST
+## REST API
 
-Documentación interactiva disponible en [http://localhost:8000/docs](http://localhost:8000/docs).
+Interactive documentation available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
 ### `GET /health`
 
-Verifica el estado del servicio y la versión activa del modelo.
+Checks the service status and the active model version.
 
 ```bash
 curl http://localhost:8000/health
 ```
 
-**Respuesta:**
+**Response:**
 ```json
 {
   "status": "healthy",
@@ -265,13 +268,13 @@ curl http://localhost:8000/health
 
 ### `GET /metadata`
 
-Devuelve los metadatos del modelo y las métricas de validación.
+Returns the model metadata and validation metrics.
 
 ### `GET /paises`
 
-Devuelve el catálogo de países con nombres legibles.
+Returns the catalog of countries with readable names.
 
-**Respuesta:**
+**Response:**
 ```json
 [
   {
@@ -287,7 +290,7 @@ Devuelve el catálogo de países con nombres legibles.
 
 ### `POST /predict`
 
-Genera una predicción del valor comercial (en miles de USD) para un país, tipo de operación, tipo de bien y periodo específicos.
+Generates a trade value prediction (in thousands of USD) for a specific country, operation type, good type, and period.
 
 ```bash
 curl -X POST http://localhost:8000/predict \
@@ -301,7 +304,7 @@ curl -X POST http://localhost:8000/predict \
   }'
 ```
 
-**Respuesta:**
+**Response:**
 ```json
 {
   "predicted_val_usd_miles": 17386382.0,
@@ -318,43 +321,43 @@ curl -X POST http://localhost:8000/predict \
   "warning": null
 }
 ```
-## Decisiones de diseño
+## Design decisions
 
-### ¿Por qué XGBoost y no Random Forest?
-En la fase de comparación, Random Forest obtuvo el mejor $R^2$ en validación (`0.9900`). Sin embargo:
-* **Tamaño del bundle:** RF pesa ~1 GB, mientras que XGB pesa ~25 MB.
-* **Velocidad de inferencia:** XGB es ~5x más rápido en predicción individual.
-* **$R^2$ en test:** XGB *tuning* (`0.8433`) es ligeramente mejor que RF *tuning* (`0.8284`).
+### Why XGBoost and not Random Forest?
+During the comparison phase, Random Forest obtained the best $R^2$ on validation (`0.9900`). However:
+* **Bundle size:** RF weighs ~1 GB, while XGB weighs ~25 MB.
+* **Inference speed:** XGB is ~5× faster at single prediction.
+* **Test $R^2$:** tuned XGB (`0.8433`) is slightly better than tuned RF (`0.8284`).
 
-Para un despliegue en cloud gratuito (Render, Railway, Fly.io), el tamaño es determinante. XGBoost es la decisión de ingeniería correcta, aunque no sea la de máximo $R^2$ en validación cruzada.
+For deployment on free cloud tiers (Render, Railway, Fly.io), size is decisive. XGBoost is the right engineering decision, even if it is not the maximum-$R^2$ one in cross-validation.
 
-### ¿Por qué filtrar agregados continentales?
-El dataset del INEGI es un cubo OLAP con distintos niveles de agregación: nacional, continental, regional y país. Incluye códigos como `AME` (América), `ASI` (Asia), `ZZZ` (Países no identificados), etc., que no son países reales. Si el modelo los entrena como si fueran países, aprende patrones artificiales que no generalizan.
+### Why filter out continental aggregates?
+The INEGI dataset is an OLAP cube with different levels of aggregation: national, continental, regional, and country. It includes codes like `AME` (America), `ASI` (Asia), `ZZZ` (Unidentified countries), etc., which are not real countries. If the model trains them as if they were countries, it learns artificial patterns that do not generalize.
 
-### ¿Por qué fallback `R00` para países sin región?
-24 países (`CHN`, `JPN`, `KOR`, `IND`, etc.) no tienen `CLAVE_REGION` asignada en el catálogo del INEGI. En lugar de eliminarlos (lo que implicaría perder socios comerciales clave), usamos:
+### Why fall back to `R00` for countries with no region?
+24 countries (`CHN`, `JPN`, `KOR`, `IND`, etc.) have no `CLAVE_REGION` assigned in the INEGI catalog. Instead of dropping them (which would mean losing key trading partners), we use:
 * `clave_region = "R00"`
-* `nombre_region = "Sin región asignada"`
+* `nombre_region = "Sin región asignada"` (No region assigned)
 
-Esto mantiene la consistencia del contrato de la API sin perder información.
+This keeps the API contract consistent without losing information.
 
-### ¿Por qué el modelo no diferencia 2024 de 2025?
-El modelo no tiene una *feature* de tendencia temporal; solo usa `ANIO` y `MES` como números crudos. Para un árbol de decisión, 2024 y 2025 pueden ser indistinguibles si el árbol aprendió que *"cualquier año entre 2023-2025 tiene el mismo comportamiento"*. Esta es una limitación conocida y documentada, reflejada en el test `test_predict_usa_2024_y_2025_mismo_nivel`.
+### Why doesn't the model distinguish 2024 from 2025?
+The model has no temporal trend *feature*; it only uses `ANIO` and `MES` as raw numbers. For a decision tree, 2024 and 2025 can be indistinguishable if the tree learned that *"any year between 2023-2025 has the same behavior"*. This is a known and documented limitation, reflected in the test `test_predict_usa_2024_y_2025_mismo_nivel`.
 
-> Para pronóstico real de series de tiempo, se necesitaría ARIMA, Prophet o LSTM con *lags* del target.
+> For real time-series forecasting, ARIMA, Prophet, or LSTM with target *lags* would be required.
 
 ---
 
-## Métricas del modelo
+## Model metrics
 
-| Modelo | $R^2$ val | $R^2$ test | MAE val (miles USD) | Tamaño |
+| Model | $R^2$ val | $R^2$ test | MAE val (thousands USD) | Size |
 | :--- | :---: | :---: | :---: | :---: |
 | Ridge | 0.7608 | 0.5822 | 49,115 | ~1 MB |
 | RF | 0.9651 | 0.8284 | 18,561 | ~1 GB |
 | HGB | 0.9373 | 0.7729 | 21,087 | ~15 MB |
-| **XGB (producción)** | **0.9819** | **0.8433** | **14,199** | **~25 MB** |
+| **XGB (production)** | **0.9819** | **0.8433** | **14,199** | **~25 MB** |
 
-> El *gap* entre validación (`0.98`) y test (`0.84`) se explica por el cambio metodológico de 2023: el INEGI reclasificó las manufacturas, cambiando la distribución del target (documentado en los metadatos oficiales).
+> The *gap* between validation (`0.98`) and test (`0.84`) is explained by the 2023 methodological change: INEGI reclassified manufacturing, shifting the target distribution (documented in the official metadata).
 
 ---
 
@@ -364,38 +367,38 @@ El modelo no tiene una *feature* de tendencia temporal; solo usa `ANIO` y `MES` 
 uv run pytest test/ -v
 ```
 
-Incluye **15 tests de integración** que cubren:
-* `Health` y `metadata` del modelo.
-* Catálogo de países (presencia de socios, filtrado de agregados y *fallback* `R00`).
-* Predicciones válidas (USA, China, 2026 con *warning*).
-* Errores esperados (país inválido, mes/año fuera de rango, tipo de flujo inválido).
-* Limitaciones conocidas (`2024 ≡ 2025`).
+Includes **15 integration tests** covering:
+* Model `health` and `metadata`.
+* Country catalog (presence of partners, filtering of aggregates, and `R00` *fallback*).
+* Valid predictions (USA, China, 2026 with *warning*).
+* Expected errors (invalid country, month/year out of range, invalid flow type).
+* Known limitations (`2024 ≡ 2025`).
 
 ---
 
-## Estructura del proyecto
+## Project structure
 
 ```text
 .
 ├── api/
 │   ├── main.py              # FastAPI app + endpoints
-│   └── schemas.py           # Contratos Pydantic
+│   └── schemas.py           # Pydantic contracts
 ├── app/
-│   └── streamlit_app.py     # UI corporativa
+│   └── streamlit_app.py     # Corporate UI
 ├── data/
-│   ├── raw/                 # CSVs del INEGI (no versionados)
-│   └── processed/           # Parquet limpio (no versionado)
+│   ├── raw/                 # INEGI CSVs (not versioned)
+│   └── processed/           # Clean Parquet (not versioned)
 ├── models/
-│   └── bundle.pkl           # Pipeline + lookup (no versionado)
+│   └── bundle.pkl           # Pipeline + lookup (not versioned)
 ├── notebooks/
-│   └── notebook.ipynb            # Análisis exploratorio
+│   └── notebook.ipynb       # Exploratory analysis
 ├── src/
-│   ├── data.py              # Carga y limpieza
-│   ├── features.py          # Ingeniería de features
-│   ├── train.py             # Entrenamiento y tuning
-│   └── predict.py           # Inferencia
+│   ├── data.py              # Loading and cleaning
+│   ├── features.py          # Feature engineering
+│   ├── train.py             # Training and tuning
+│   └── predict.py           # Inference
 ├── test/
-│   └── test_api.py          # Tests de integración
+│   └── test_api.py          # Integration tests
 ├── Dockerfile.api
 ├── Dockerfile.streamlit
 ├── docker-compose.yml
@@ -405,9 +408,9 @@ Incluye **15 tests de integración** que cubren:
 
 ---
 
-## Variables de entorno (Opcional)
+## Environment variables (Optional)
 
-Si deseas personalizar los puertos o la URL de la API, copia el archivo de ejemplo y edítalo:
+If you want to customize the ports or the API URL, copy the example file and edit it:
 
 ```bash
 cp .env.example .env
@@ -415,25 +418,25 @@ cp .env.example .env
 
 ---
 
-## Comandos útiles
+## Useful commands
 
 ```bash
-# Instalar dependencias
+# Install dependencies
 uv sync
 
-# Entrenar el modelo
+# Train the model
 uv run python -m src.train
 
-# Ejecutar tests
+# Run tests
 uv run pytest test/ -v
 
-# Levantar API local
+# Launch API locally
 uv run uvicorn api.main:app --reload --port 8000
 
-# Levantar UI local
+# Launch UI locally
 uv run streamlit run app/streamlit_app.py
 
-# Gestión con Docker
+# Docker management
 docker compose up --build
 docker compose logs -f
 docker compose down
@@ -441,37 +444,37 @@ docker compose down
 
 ---
 
-## Fuente de datos
+## Data source
 
-**INEGI — Balanza Comercial de Mercancías de México (BCMM)**
-* **Programa:** [https://www.inegi.org.mx/programas/comext/](https://www.inegi.org.mx/programas/comext/)
-* **Cobertura:** 2015-01 a 2026-08
-* **Unidades:** Miles de dólares estadounidenses (FOB)
-* **Frecuencia:** Mensual
-* **Estatus de cifras:** Definitivas (2015-2022), Ajustadas (2023-2025), Revisadas (2026)
+**INEGI — Mexico's Merchandise Trade Balance (BCMM)**
+* **Program:** [https://www.inegi.org.mx/programas/comext/](https://www.inegi.org.mx/programas/comext/)
+* **Coverage:** 2015-01 to 2026-08
+* **Units:** Thousands of US dollars (FOB)
+* **Frequency:** Monthly
+* **Data status:** Definitive (2015-2022), Adjusted (2023-2025), Revised (2026)
 
 ---
-### Pasos para replicar desde cero
+### Steps to replicate from scratch
 
 ```bash
-### 1. Clonar el repositorio
+### 1. Clone the repository
 git clone https://github.com/angel-monterrosas/machine-learning-zoomcamp.git
 cd machine-learning-zoomcamp/homework/Midterm_Project
 
-# 2. Instalar dependencias exactas
+# 2. Install exact dependencies
 uv sync --frozen
 
-# 3. Colocar los 6 archivos CSV del INEGI en data/raw/ (ver sección Descarga de datos)
+# 3. Place the 6 INEGI CSV files in data/raw/ (see Data download section)
 
-# 4. Reproducir el procesamiento y entrenamiento del modelo
+# 4. Reproduce the processing and model training
 uv run python -m src.train
 
-# 5. Validar el comportamiento y contrato de la API mediante tests
+# 5. Validate the API behavior and contract via tests
 uv run pytest test/ -v
 
-# 6. Levantar los servicios containerizados
+# 6. Launch the containerized services
 docker compose up --build
 ```
-## Licencia
+## License
 
-Uso educativo — Proyecto del ML Zoomcamp 2025.
+Educational use — ML Zoomcamp 2025 project.
