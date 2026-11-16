@@ -5,8 +5,6 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-red.svg)](https://streamlit.io/)
 [![Docker](https://img.shields.io/badge/Docker-compose-blue.svg)](https://docs.docker.com/compose/)
 
-# BCMM Predictor — Balanza Comercial de Mercancías de México
-
 ![BCMM Predictor UI](docs/screenshot.PNG) 
 
 ![BCMM Predictor API](docs/screenshot2.PNG) 
