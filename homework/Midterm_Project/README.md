@@ -8,6 +8,8 @@
 ![BCMM Predictor UI](docs/screenshot.PNG) 
 
 ![BCMM Predictor API](docs/screenshot2.PNG) 
+
+![BCMM Predictor API](docs/screenshot3.PNG) 
 Sistema de predicción del valor del comercio exterior de México (exportaciones e importaciones) basado en datos de la **Balanza Comercial de Mercancías de México (BCMM)** del INEGI. El proyecto expone una **API REST** (FastAPI) y una **interfaz web** (Streamlit), ambas containerizadas con Docker.
 
 ---
