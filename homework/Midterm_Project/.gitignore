@@ -12,10 +12,6 @@ data/raw/
 data/processed/
 *.parquet
 
-# Modelos entrenados (se regeneran con `uv run python -m src.train`)
-models/*.pkl
-models/*.joblib
-!models/.gitkeep
 
 # IDE
 .vscode/
